@@ -1,0 +1,18 @@
+---
+- name: Check for required parameters
+  assert:
+    that:
+      - post_install_hostname is defined
+      - post_install_os is defined
+      - post_install_os|upper in "WINDOWS" "UNIX"
+      - post_install_provider is defined
+      - post_install_site is defined
+      - post_install_environment is defined
+      - post_install_osi is defined
+      - post_install_network_area is defined
+    fail_msg: "Provided parameters are not OK"
+
+- name: Set facts
+  set_fact:
+    post_install_hostname: "{{ post_install_hostname|lower }}" 
+

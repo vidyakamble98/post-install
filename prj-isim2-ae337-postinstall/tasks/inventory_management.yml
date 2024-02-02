@@ -1,0 +1,45 @@
+- name: Block inventory update
+  block: 
+    - name: Get Job Templates ID
+      uri:
+        url: "{{ tower_url }}/api/v2/job_templates/?name={{ post_install_inventory_jtl_name }}"
+        user: "{{ tower_username }}"
+        password: "{{ tower_password }}"
+        force_basic_auth: yes
+        method: GET
+        status_code: [200]
+      register: post_install_jtl_inventory
+      delegate_to: localhost
+
+    - name: Launch JBT for inventory update
+      uri:
+        url: "{{ tower_url }}/api/v2/job_templates/{{ post_install_jtl_inventory.json.results[0].id }}/launch/"
+        user: "{{ tower_username }}"
+        password: "{{ tower_password }}"
+        force_basic_auth: yes
+        method: POST
+        body_format: json
+        return_content : yes
+        status_code: [201]
+        body: '{"extra_vars":{"inventory_update_action":"add","inventory_update_hostname":"{{ post_install_hostname }}","inventory_update_os":"{{ post_install_os }}","inventory_update_bastion":"{{ post_install_bastion }}","inventory_update_site":"{{ post_install_site }}","inventory_update_environment":"{{ post_install_environment }}","inventory_update_osi":"{{ post_install_osi }}","inventory_update_network_area":"{{ post_install_network_area }}","inventory_update_domain":"{{ post_install_domain|default("") }}"} }'
+      register: post_install_jtl_inventory_launch
+      delegate_to: localhost
+
+    - name: Wait for job completion
+      uri:
+        url: "{{ tower_url }}/api/v2/jobs/{{ post_install_jtl_inventory_launch.json.job }}/"
+        user: "{{ tower_username }}"
+        password: "{{ tower_password }}"
+        force_basic_auth: yes
+        method: GET
+        status_code: [200]
+      register: post_install_jtl_inventory_job
+      until: post_install_jtl_inventory_job.json.finished is search("-")
+      retries: 60
+      delay: 10
+      delegate_to: localhost
+
+    - name: Check job status
+      fail:
+        msg: "Install for {{ item[0] }} failed"
+      when: post_install_jtl_inventory_job.json.status|lower in 'failed' 'error' 'canceled'

@@ -1,0 +1,80 @@
+ae: ae337
+ae_description: post-install
+
+report_csv_fields:
+      - HOST
+      - OS_FAMILY
+      - OS
+      - scripts
+      - softwares
+      - passwords_changes
+      - exploitation_scripts
+      - reboot
+      - STATUS_EXEC
+
+#common
+post_install_main_jtl_name: "JTL-ISIM2-{{ use_case_environment }}-AE337-Postinstall"
+post_install_caccia_jtl_name: "JTL-ISIM2-{{ use_case_environment }}-AE337-Postinstall-Pretasks-Caccia"
+
+#inventory
+post_install_inventory_jtl_name: JTL-ISIM2-PRD-Inventory-Update
+
+#keepass / passwords / credentials
+post_install_keepass_unix_entry_username: admsrv
+post_install_keepass_unix_entry_title: MDP recette
+post_install_keepass_unix_entry_group: OUTILS/LINUX
+post_install_password_jtl_name: "WTL-ISIM2-{{ use_case_environment }}-AE352-Changement_MDP"
+post_install_credential_admsrv_id: 46
+post_install_credential_gitea_id: 20
+
+#scripts
+post_install_script_path: /tmp/AE337/post-install-scripts
+
+#softwares
+post_install_software_jtl_name: JTL-ISIM2-PRD-AE310_AE311-Software-Management
+
+#exploit
+post_install_exploitation_jtl_name: JTL-ISIM2-PRD-AE366-Exploitation-Scripts-Deployment
+
+#other
+post_install_site_converter:
+  NOE: noe
+  PCY: pacy
+
+post_install_bastion_converter:
+  espace_groupe:
+    NOE: ZHBNOE
+    PCY: ZHBPCY
+  espace_externe_front_end:
+    NOE: DMZNOE
+    PCY: DMZPCY
+  espace_externe_back_end:
+    NOE: ZHBNOE
+    PCY: ZHBPCY
+  espace_renforce:
+    NOE: ZHBNOE
+    PCY: ZHBPCY
+  espace_essentiel:
+    NOE: ZHBNOE
+    PCY: ZHBPCY
+  espace_admin:
+    NOE: ZHBNOE
+    PCY: ZHBPCY
+  zhb:
+    NOE: ZHBNOE
+    PCY: ZHBPCY
+  dmzhaute:
+    NOE: ZHBNOE
+    PCY: ZHBPCY
+  dmzbasse:
+    NOE: DMZNOE
+    PCY: DMZPCY
+  zsibasse:
+    NOE: ZHBNOE
+    PCY: ZHBPCY
+  zsihaute:
+    NOE: ZHBNOE
+    PCY: ZHBPCY
+  newcloud:
+    NOE: ZHBNOE
+    PCY: ZHBPCY

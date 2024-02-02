@@ -1,0 +1,77 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../vars/main.yml
+
+  tasks:
+#    - name: Check parameters
+#      include_tasks: "tasks/check_parameters.yml"
+#      run_once: yes
+
+#    - name: Set AE337 facts
+#      set_fact:
+#        ae337:
+#          HOST: "{{ inventory_update_hostname }}"
+#          OS_FAMILY: "{{ inventory_update_os }}"
+#          OS: "N/A"
+#          reconfiguration_script: 'N/A'
+#          central: 'N/A'
+#          pollers: 'N/A'
+#          target_poller: 'N/A'
+#          nodes: 'N/A'
+#          STATUS_EXEC: 'KO'
+#      ignore_unreachable: true
+
+#    - name: Delete host from inventory
+#      include_role: 
+#        name: rol-isim2-inventory-update
+#      vars:
+#        inventory_update_action: delete
+#        inventory_update_source: INV-ISIM2-GLOBAL
+#        inventory_update_os: WINDOWS
+#        inventory_update_hostname: "{{ outer_item }}"
+#      loop:
+#        - dceyy0fj
+#        - dceyy0fk
+#      loop_control:
+#        loop_var: outer_item
+
+
+#    - name: Add host to inventory
+#      include_role: 
+#        name: rol-isim2-inventory-update
+#      vars:
+#        inventory_update_action: add
+#        inventory_update_source: INV-ISIM2-GLOBAL
+#        inventory_update_os: WINDOWS
+#        inventory_update_hostname: "{{ outer_item[0] }}"
+#        inventory_update_bastion: "{{ outer_item[4] }}"
+#        inventory_update_site: "{{ outer_item[3] }}"
+#        inventory_update_environment: "{{ outer_item[1] }}"
+#        inventory_update_osi: "{{ outer_item[2] }}"
+#        inventory_update_network_area: "{{ outer_item[5] }}"
+#        inventory_update_domain: "{{ outer_item[6] }}"
+#      loop:
+#        - ["do1yy1bt","PROD","OSC","NOE","ZHBNOE","unknown","ADAM"]
+#        - ["no2fy09t","DEV","DISCOVR","NOE","ZHBNOE","unknown","ADAM"]
+#      loop_control:
+#        loop_var: outer_item
+
+    - name: Add host to inventory
+      include_role: 
+        name: rol-isim2-inventory-update
+      vars:
+        inventory_update_action: add
+        inventory_update_source: INV-ISIM2-GLOBAL
+        inventory_update_os: UNIX
+        inventory_update_hostname: "{{ outer_item[0] }}"
+        inventory_update_bastion: "{{ outer_item[4] }}"
+        inventory_update_site: "{{ outer_item[3] }}"
+        inventory_update_environment: "{{ outer_item[1] }}"
+        inventory_update_osi: "{{ outer_item[2] }}"
+        inventory_update_network_area: "{{ outer_item[5] }}"
+      loop:
+        - ["noeyymss-pra","BACKUP","DISCOVR","PCY","ZHBPCY","unknown"]
+      loop_control:
+        loop_var: outer_item

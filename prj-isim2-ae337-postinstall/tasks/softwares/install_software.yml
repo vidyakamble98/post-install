@@ -1,0 +1,66 @@
+- name: Block install software
+  block:
+    - name: Launch JBT for software install
+      uri:
+        url: "{{ tower_url }}/api/v2/job_templates/{{ post_install_jtl_software_management.json.results[0].id }}/launch/"
+        user: "{{ tower_username }}"
+        password: "{{ tower_password }}"
+        force_basic_auth: yes
+        method: POST
+        body_format: json
+        return_content : yes
+        status_code: [201]
+        body: >
+          {
+          "extra_vars":{
+            "software_management_environment":"PROD",
+            "software_management_software":"{{ item[0] }}",
+            "software_management_security_level":"n3",
+            "software_management_script_args":"{{ item[1] }}",
+            "software_management_management_type":"install",
+            "use_case_report_email":"{{ use_case_report_email }}"
+          },
+          {% if item[3] == 'true' %}
+          "credentials":[{{ post_install_credential_admsrv_id|int }},{{ post_install_credential_gitea_id|int }}, 21,22,26],
+          {% endif %}
+          "limit":"{{ post_install_hostname }}"
+          }
+      register: post_install_jtl_software_management_launch
+      delegate_to: localhost
+
+    - name: Wait for job completion
+      uri:
+        url: "{{ tower_url }}/api/v2/jobs/{{ post_install_jtl_software_management_launch.json.job }}/"
+        user: "{{ tower_username }}"
+        password: "{{ tower_password }}"
+        force_basic_auth: yes
+        method: GET
+        status_code: [200]
+      register: post_install_jtl_software_management_job
+      until: post_install_jtl_software_management_job.json.finished is search("-")
+      retries: 60
+      delay: 10
+      delegate_to: localhost
+
+    - name: Check job status
+      fail:
+        msg: "Install for {{ item[0] }} failed"
+      when: post_install_jtl_software_management_job.json.status|lower in 'failed' 'error' 'canceled'
+
+    - name: Set softwares informations
+      set_fact:
+        ae337: "{{ ae337 | combine({'softwares': ae337.softwares + [{'software':item[0], 'installed':'True' }]}) }}"
+      when: item[3] == 'false'
+
+  rescue:
+    - name: Set softwares informations
+      set_fact:
+        ae337: "{{ ae337 | combine({'softwares': ae337.softwares + [{'software':item[0], 'installed':'False' }]}) }}"	
+      when: item[3] == 'false'
+      
+    - name: Set status exec on server KO
+      set_fact:
+        ae337: "{{ ae337 | combine({'STATUS_EXEC': 'KO'}) }}"
+      when: item[3] == 'false'
+
+  when: item[2] == 'true'

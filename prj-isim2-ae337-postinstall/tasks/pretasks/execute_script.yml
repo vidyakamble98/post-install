@@ -1,0 +1,12 @@
+- name: Block execute script
+  block:
+    - name: "Execute script {{ item }} (unix)"
+      script: 
+        cmd: "{{ item }}{{ (' {} {}'.format(post_install_network_area, post_install_site_converter[post_install_site])) if 'Step1' in item else (' {}'.format(post_install_provider)) if 'Step2' in item else '' }}"
+      delegate_to: "{{ post_install_hostname }}"
+      vars:
+        ansible_become: true
+        ansible_user: "{{ ansible_user_machine }}"
+        ansible_password: "{{ ansible_password_machine }}"
+        ansible_become_user: root
+        ansible_become_password: "{{ ansible_password_machine }}"

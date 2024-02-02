@@ -1,0 +1,82 @@
+---
+- name: Set CSV Header
+  set_fact:
+    report_csv: "{{ report_csv | default('') + item | string }}{{ ';' if (index + 1) % (report_csv_fields | length) else '\n'  }}"
+  delegate_to: localhost
+  run_once: yes
+  loop: "{{ report_csv_fields | list }}"
+  loop_control:
+    index_var: index
+
+- name: Complete CSV with play results
+  set_fact:
+    report_csv: "{{ report_csv | default('') + hostvars[item[0]][ae][item[1]] | string }}{{ ';' if (index + 1) % (report_csv_fields | length) else '\n'  }}"
+    report_csv_file_path: "/tmp/{{ ae | upper }}/"
+    report_csv_file: "{{ '{}_{}.csv'.format(ansible_date_time.iso8601_basic, ae_description) }}"
+  delegate_to: localhost
+  run_once: yes
+  loop: "{{ ansible_play_hosts_all | product(report_csv_fields) | list }}"
+  loop_control:
+    index_var: index
+
+- name: Write CSV content to file
+  copy:
+    content: "{{ report_csv }}"
+    dest: "{{ report_csv_file_path + report_csv_file }}"
+  delegate_to: localhost
+  run_once: yes
+
+- name: Set Nexus role param
+  set_fact:
+    int_nexus_raw_asset1: "@{{ report_csv_file_path + report_csv_file}}"
+    int_nexus_raw_asset1_filename: "{{ report_csv_file }}"
+    int_nexus_raw_directory: "use_cases/{{ ae | upper }}/{{ use_case_environment }}"
+  delegate_to: localhost
+  run_once: yes
+
+- name: Upload results on Nexus
+  import_role:
+    name: interface_nexus
+  vars:
+    int_nexus_path: /v1/components
+    int_nexus_method: post
+    int_nexus_repository: automation
+  run_once: yes
+  delegate_to: localhost
+
+- name: Delete temp CSV file
+  file:
+    path: "{{ report_csv_file_path + report_csv_file }}"
+    state: absent
+  delegate_to: localhost
+  run_once: yes
+
+- name: Set Nexus role param
+  set_fact:
+    int_nexus_name: "{{ int_nexus_raw_directory }}/{{ int_nexus_raw_asset1_filename }}"
+  delegate_to: localhost
+  run_once: yes
+
+- name: Get CSV download path
+  import_role:
+    name: interface_nexus
+  vars:
+    int_nexus_path: /v1/search/assets
+    int_nexus_method: get
+    int_nexus_repository: automation
+  run_once: yes
+  delegate_to: localhost
+
+- name: Check CSV found
+  assert:
+    that:
+      - int_nexus_response['items'] | length == 1
+    fail_msg: 'No csv found'
+  delegate_to: localhost
+  run_once: yes
+
+- name: Set download URL fact
+  set_fact:
+    report_url: "{{ int_nexus_response['items'][0]['downloadUrl'] }}"
+  delegate_to: localhost
+  run_once: yes

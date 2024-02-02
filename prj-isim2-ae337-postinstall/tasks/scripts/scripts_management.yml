@@ -1,0 +1,14 @@
+- name: Pull script post-install repo
+  git:
+    repo: "{{ 'https://{}:{}@prsstn01.noe.edf.fr:443/Automation/post-install.git'.format(gitea_username, gitea_password) }}"
+    dest: "{{ post_install_script_path }}"
+    update: yes
+    version: master
+  run_once: yes
+  delegate_to: localhost
+
+- name: Block execute scripts
+  include_tasks: ./execute_script.yml
+  loop: "{{ lookup('fileglob', '{}/{}/*'.format(post_install_script_path, 'windows' if post_install_os|lower == 'windows' else 'unix'), wantlist=True) | sort(case_sensitive=False) }}"
+  loop_control:
+    extended: yes

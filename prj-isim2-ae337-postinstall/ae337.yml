@@ -1,0 +1,121 @@
+---
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: Tunnel checks and mounts
+      import_role: 
+        name: rol-isim2-socks5-tunnels
+      delegate_to: localhost
+      run_once: yes
+
+- hosts: "{{ post_install_hostname }}"
+  gather_facts: false
+  vars_files:
+    - vars/main.yml
+
+  tasks:
+    - name: Set AE337 facts
+      set_fact:
+        ae337:
+          HOST: "{{ post_install_hostname }}"
+          OS_FAMILY: "{{ post_install_os }}"
+          OS: "N/A"
+          scripts: []
+          softwares: []
+          passwords_changes: []
+          exploitation_scripts: N/A
+          reboot: N/A
+          STATUS_EXEC: 'OK'
+      ignore_unreachable: true
+
+#    - name: Block setup facts
+#      block:
+#        - name: Check if host is reachable
+#          delegate_to: localhost
+#          expect:
+#            command: ssh {{ ansible_ssh_common_args }} {{ ansible_user }}@{{ inventory_hostname }} ls
+#            timeout: 10
+#            responses:
+#              "password:":
+#                - "{{ ansible_password }}"
+#          register: test_status
+#
+#        - name: Setup facts
+#          setup:
+#
+#      rescue:
+#        - name: Launch password trick
+#          include_tasks: "tasks/passwords/password_trick.yml"
+#
+#       - name: Setup facts
+#          setup:
+
+    - name: Setup facts
+      setup:
+
+    - name: Set AE337 facts
+      set_fact:
+        ae337:
+          HOST: "{{ post_install_hostname }}"
+          OS_FAMILY: "{{ post_install_os }}"
+          OS: "{{ 'windows' if ansible_os_family == 'Windows' else 'aix' if ansible_distribution == 'AIX' else 'linux' }}"
+          scripts: []
+          softwares: []
+          passwords_changes: []
+          exploitation_scripts: N/A
+          reboot: N/A
+          STATUS_EXEC: 'OK'
+      ignore_unreachable: true
+
+    - name: Launch post-install scripts
+      include_tasks: "tasks/scripts/scripts_management.yml"
+
+    - name: Launch reboot
+      include_tasks: "tasks/reboot_management.yml"
+
+    - name: Launch post-install software install
+      include_tasks: "tasks/softwares/softwares_management.yml"
+
+    - name: Launch post-install password changes
+      include_tasks: "tasks/passwords/passwords_management.yml"
+
+    - name: Launch post-install exploitation scripts deployment
+      include_tasks: "tasks/exploit/exploitation_management.yml"
+
+    - name: Launch reboot
+      include_tasks: "tasks/reboot_management.yml"
+
+#    - name: Delete temp credentials
+#      include_tasks: "tasks/credentials_management.yml"
+#      vars: 
+#        post_install_temp_credentials_action: delete
+
+    - name: Block create report
+      block:
+        - name: Create report
+          include_tasks: "tasks/report_creator.yml"
+          run_once: yes
+
+        - name: Send mail
+          import_role: 
+            name: rol-capg-mailstd
+          vars:
+            mailstd_type: REPORT
+            mailstd_smtpSubject: "[{{ ae | upper }}] Post-installation - Résultats d'exécution"
+            mailstd_smtpSecure: never
+            mailstd_smtpTo: "{{ use_case_report_email }}"
+            mailstd_smtpBody: |
+                        Bonjour,
+                        le cas d'usage a été exécuté sur {{ ansible_limit.split(',') | length }} serveurs.
+                        le fichier résultat est accessible sur le partage: <a href="{{ report_url }}">Rapport d'exécution</a>
+
+                        Cordialement;
+                        Equipe Automation.
+            mailstd_listKeyInputUsecase: Machine;OS;Bastion;Site;Environment;OSI;Network Area
+            mailstd_listValInputUsecase: "{{ post_install_hostname }};{{ post_install_os }};{{ post_install_bastion }};{{ post_install_site }};{{ post_install_environment }};{{ post_install_osi }};{{ post_install_network_area }}"
+
+      rescue:
+        - debug:
+            msg: "Report creation failed."
+          delegate_to: localhost
+          run_once: yes

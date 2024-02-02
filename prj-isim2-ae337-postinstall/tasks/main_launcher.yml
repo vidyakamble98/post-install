@@ -1,0 +1,26 @@
+- name: Block main launcher
+  block: 
+    - name: Get Job Templates ID
+      uri:
+        url: "{{ tower_url }}/api/v2/job_templates/?name={{ post_install_main_jtl_name }}"
+        user: "{{ tower_username }}"
+        password: "{{ tower_password }}"
+        force_basic_auth: yes
+        method: GET
+        status_code: [200]
+      register: post_install_jtl_main
+      delegate_to: localhost
+
+    - name: Launch JBT for post-install main
+      uri:
+        url: "{{ tower_url }}/api/v2/job_templates/{{ post_install_jtl_main.json.results[0].id }}/launch/"
+        user: "{{ tower_username }}"
+        password: "{{ tower_password }}"
+        force_basic_auth: yes
+        method: POST
+        body_format: json
+        return_content : yes
+        status_code: [201]
+        body: '{"extra_vars":{"use_case_environment": "{{ use_case_environment }}","use_case_report_email":"{{ use_case_report_email }}","post_install_trigram":"{{ post_install_trigram|default("") }}","post_install_hostname":"{{ post_install_hostname|lower }}","post_install_os":"{{ post_install_os }}","post_install_bastion":"{{ post_install_bastion }}","post_install_site":"{{ post_install_site }}","post_install_environment":"{{ post_install_environment }}","post_install_osi":"{{ post_install_osi }}","post_install_network_area":"{{ post_install_network_area }}","post_install_provider":"{{ post_install_provider }}","post_install_domain":"{{ post_install_domain|default("") }}","post_install_win_appid":"{{ post_install_win_appid|default("") }}","post_install_win_bkp_freq":"{{ post_install_win_bkp_freq|default("") }}","post_install_win_net_ips":"{{ post_install_win_net_ips|default("") }}","post_install_win_net_names":"{{ post_install_win_net_names|default("") }}","post_install_win_type_appro":"{{ post_install_win_type_appro|default("") }}","post_install_assettag":"{{ post_install_assettag|default("") }}","post_install_caccia_password":"{{ post_install_caccia_password|default("") }}"},"limit":"{{ post_install_hostname|lower }}"}'
+      register: post_install_jtl_main_launch
+      delegate_to: localhost

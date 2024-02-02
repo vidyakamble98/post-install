@@ -1,0 +1,32 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Tunnel checks and mounts
+      import_role: 
+        name: rol-isim2-socks5-tunnels
+      delegate_to: localhost
+      run_once: yes
+
+
+- hosts: localhost
+  gather_facts: true
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: Check parameters
+      include_tasks: "tasks/check_parameters.yml"
+
+    - name: Set bastion fact
+      set_fact:
+        post_install_bastion: "{{ post_install_bastion_converter[post_install_network_area][post_install_site] }}"
+
+    - name: Launch inventory update
+      include_tasks: "tasks/inventory_management.yml"
+
+    - name: Launch Caccia test install for non std
+      include_tasks: "tasks/caccia_for_nonstd_launcher.yml"
+      when: post_install_os is defined and 'UNIX' in post_install_os
+
+    - name: Launch post-install main
+      include_tasks: "tasks/main_launcher.yml"

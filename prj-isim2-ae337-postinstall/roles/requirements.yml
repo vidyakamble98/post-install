@@ -1,0 +1,19 @@
+- name: interface_nexus
+  src: https://prsstn01.noe.edf.fr:443/Automation/PRJ-ISIM-INTERFACE-Nexus_Repository_Manager.git
+  scm: git
+  version : origin/master
+
+- name : rol-capg-mailstd
+  src : https://prsstn01.noe.edf.fr:443/Automation/rol-capg-mailstd.git
+  scm: git
+  version : origin/master
+
+- name: rol-isim2-socks5-tunnels
+  src: https://prsstn01.noe.edf.fr:443/Automation/rol-isim2-socks5-tunnels.git
+  scm: git
+  version : origin/master
+
+- name: rol-isim2-inventory-update
+  src: https://prsstn01.noe.edf.fr:443/Automation/rol-isim2-inventory-update.git
+  scm: git
+  version : origin/master

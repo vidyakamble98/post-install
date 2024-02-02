@@ -1,0 +1,44 @@
+- name: Get Job Templates ID
+  uri:
+    url: "{{ tower_url }}/api/v2/job_templates/?name={{ post_install_software_jtl_name }}"
+    user: "{{ tower_username }}"
+    password: "{{ tower_password }}"
+    force_basic_auth: yes
+    method: GET
+    status_code: [200]
+  register: post_install_jtl_software_management
+  delegate_to: localhost
+  run_once: yes
+
+# [package_name, parameters, should be installed, need different creds]
+- name: Block install softwares
+  include_tasks: ./install_software.yml
+  loop:
+    - ["caccia2-client", "{{'-k ' + post_install_caccia_password | quote + ' -z y' if post_install_network_area == 'newcloud' else '-k ' + post_install_caccia_password | quote + ' -z n'}}", "true", "false"]
+    - ["exploiteds", "", "true", "false"]
+    - ["blackout", "", "true", "false"]
+    - ["flexnet-inventory-agent", "{{'-z ' + post_install_network_area}}", "true", "false"]
+    - ["filebeat-pml", "{{'-t ' + post_install_trigram if post_install_trigram is defined else ''}}", "true", "false"]
+    - ["metricbeat-pml", "{{'-i y' if post_install_environment|upper in 'PROD' 'OUTILLAGE' else '-i n'}}", "true", "false"]
+    - ["packetbeat-pml", "", "{{ 'true' if post_install_environment|upper in 'PROD' 'PREPROD' 'BACKUP' 'FORM' else 'false'}}", "false"]
+    - ["commvault-client", "", "true", "false"]
+    - ["inventiv", "", "true", "false"]
+    - ["boom", "", "{{ 'true' if ansible_distribution_major_version == '8' else 'false'}}", "false"]
+    - ["hpsa-agent", "{{'-z ' + post_install_network_area + ' -s ' + post_install_site}}", "{{ 'true' if ansible_distribution_major_version != '8' else 'false'}}", "false"]
+  when: post_install_os|lower == 'unix'
+
+- name: Block install softwares
+  include_tasks: ./install_software.yml
+  loop:
+    - ["commvault-client", "", "true", "false"]
+    - ["oi2blackout", "", "true", "false"]
+    - ["metricbeat-pml", "", "true", "false"]
+    - ["sep", "", "true", "false"]
+    - ["sep-param", "", "true", "false"]
+    - ["wsus-param", "{{'-n ' + post_install_site_converter[post_install_site] + ' -ENV ' + post_install_environment|upper}}", "{{ 'true' if post_install_environment|upper in 'PROD' 'RECETTE' 'FORM' else 'false'}}", "false"]
+    - ["wsus-param-horsprod", "{{'-n ' + post_install_site_converter[post_install_site] + ' -ENV ' + post_install_environment|upper}}", "{{ 'false' if post_install_environment|upper in 'PROD' 'RECETTE' 'FORM' else 'true'}}", "false"]
+    - ["cygwin", "", "{{ 'true' if post_install_win_type_appro|upper == 'NON-STANDARD' else 'false'}}", "false"]
+    - ["flexnet-inventory-agent", "{{'-n ' + post_install_site_converter[post_install_site]}}", "true", "false"]
+    - ["filebeat-pml", "{{'-INS ' + post_install_trigram if post_install_trigram is defined else ''}}", "true", "false"]
+    - ["packetbeat-pml", "", "{{ 'true' if post_install_environment|upper in 'PROD' 'PREPROD' 'BACKUP' 'FORM' else 'false'}}", "false"]
+  when: post_install_os|lower == 'windows'

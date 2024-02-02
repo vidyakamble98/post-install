@@ -1,0 +1,23 @@
+- name: Block exploitation scripts
+  block: 
+    - name: Reboot
+      reboot:
+      become: yes
+      when: "{{ post_install_os|lower != 'windows'}}"
+
+    - name: Reboot
+      win_reboot:
+      when: "{{ post_install_os|lower == 'windows'}}"
+
+    - name: Set reboot OK
+      set_fact:
+        ae337: "{{ ae337 | combine({'reboot': 'Done'}) }}"	
+
+  rescue:
+    - name: Set reboot KO
+      set_fact:
+        ae337: "{{ ae337 | combine({'reboot': 'Not done'}) }}"	
+
+    - name: Set status exec on server KO
+      set_fact:
+        ae337: "{{ ae337 | combine({'STATUS_EXEC': 'KO'}) }}"	

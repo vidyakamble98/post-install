@@ -1,0 +1,34 @@
+- name: Block execute script
+  block:
+    - name: "Execute script {{ item }} (unix)"
+      script: 
+        cmd: "{{ item }}{{ (' {} {}'.format(post_install_network_area, post_install_site_converter[post_install_site])) if 'Step1' in item else (' {}'.format(post_install_provider)) if 'Step2' in item else '' }}"
+      become: yes
+      register: script_results
+      when: post_install_os|lower != 'windows'
+
+    - name: "Copy script {{ item }} (windows)"
+      win_copy:
+        src: "{{ item }}"
+        dest: C:\Temp\
+      when: post_install_os|lower == 'windows'
+
+    - name: "Execute script {{ item }} (windows)"
+      win_command: "{{ 'CMD /C powershell \"C:\\Temp\\{}'.format(item.split('/')[-1]) }}{{ ' -IP {} -name {} -AppId {} -ENV {} -AssetTag {} -Bkp {}\"'.format(post_install_win_net_ips, post_install_win_net_names, post_install_win_appid, post_install_environment, post_install_assettag, post_install_win_bkp_freq) }}"
+      async: 600
+      poll: 10
+      register: script_results
+      when: post_install_os|lower == 'windows'
+
+    - name: Set script informations
+      set_fact:
+        ae337: "{{ ae337 | combine({'scripts': ae337.scripts + [{'script':item, 'executed':'True' }]}) }}"	
+  
+  rescue:
+    - name: Set script informations
+      set_fact:
+        ae337: "{{ ae337 | combine({'scripts': ae337.scripts + [{'script':item, 'executed':'False' }]}) }}"	
+
+    - name: Set status exec on server KO
+      set_fact:
+        ae337: "{{ ae337 | combine({'STATUS_EXEC': 'KO'}) }}"	

@@ -1,0 +1,38 @@
+# [AE337] Post-installation of servers (RHEL/AIX/Windows)
+
+The use case allows you to carry out the post-installation of the servers. The main tasks are, in order of execution:
+- add the server to the Tower inventory,
+- (optional) install Caccia on non-standard Unixes,
+- play the OS scripts present in the "post-install" repo,
+- perform a first reboot
+- install the necessary software (via AE310),
+- change default passwords (via AE352),
+- deploy the operating scripts (via AE366),
+- do a final reboot.
+
+## Prerequisites and dependencies
+
+The post-install scripts must be present in the "post-install" repo.
+The use cases on which the post-install depends must be present in Tower.
+
+## Use
+
+Input variables:
+- post_install_assettag: Server asset tag (ex: ISRV0xxxxxx)
+- post_install_caccia_password: Caccia password
+- post_install_environment: Server environment (ex: INTEG)
+- post_install_hostname: Server hostname (ex: pcyyyxxx)
+- post_install_network_area: Network area (e.g.: group_space)
+- post_install_os: (UNIX|WINDOWS) Server OS
+- post_install_osi: server OSI (ex: OSC)
+- post_install_provider: Server Provider (CONSER
+- post_install_site: (PCY|NOE) Server site
+- post_install_trigram: Server trigram (ex: OI2)
+- (windows only) post_install_domain: Windows server domain
+- (windows only) post_install_win_appid: Windows server AppID
+- (windows only) post_install_win_bkp_freq: Windows server backup frequency
+- (windows only) post_install_win_net_ips: List of Windows server IPs
+- (windows only) post_install_win_net_names: List of names of the Windows server NICs
+- (windows only) post_install_win_type_appro: Windows server appro type
+- use_case_environment: (DEV|PRD) use case execution environment.
+- use_case_report_email: list of emails (comma separated) which will receive the execution report.

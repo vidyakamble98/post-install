@@ -1,0 +1,47 @@
+- hosts: "{{ post_install_hostname|lower }}"
+  gather_facts: false
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: Block install Caccia with admsrv account if non standard approv
+      block:
+        - name: Test connection with setup (1)
+          setup:
+          register: conn_status
+          ignore_unreachable: true
+
+        - name: Pause between retry
+          pause:
+            seconds: 30
+
+        - name: Test connection with setup (2)
+          setup:
+          register: conn_status
+          ignore_unreachable: true
+
+        - name: Fail
+          fail:
+            msg: Unreachable
+          failed_when: conn_status.msg is defined and 'Invalid/incorrect' in conn_status.msg
+
+      rescue:
+        - name: Launch post-install scripts Step1
+          include_tasks: "tasks/pretasks/scripts_management.yml"
+
+        - name: Get Job Templates ID
+          uri:
+            url: "{{ tower_url }}/api/v2/job_templates/?name={{ post_install_software_jtl_name }}"
+            user: "{{ tower_username }}"
+            password: "{{ tower_password }}"
+            force_basic_auth: yes
+            method: GET
+            status_code: [200]
+          register: post_install_jtl_software_management
+          delegate_to: localhost
+
+        - name: Install Caccia with admsrv account if non standard approv
+          include_tasks: ./tasks/softwares/install_software.yml
+          loop:
+            - ["caccia2-client", "{{'-k ' + post_install_caccia_password | quote + ' -z y' if post_install_network_area == 'newcloud' else '-k ' + post_install_caccia_password | quote + ' -z n'}}", "true", "true"]
+
+      when: post_install_os is defined and 'UNIX' in post_install_os
